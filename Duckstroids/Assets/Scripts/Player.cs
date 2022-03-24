@@ -31,19 +31,25 @@ public class Player : MonoBehaviour
         _thrusting = Input.GetAxis("Vertical") != 0;
         _turning = Input.GetAxis("Horizontal") != 0;
         _turnDirection = Input.GetAxis("Horizontal");
-        
-        if(Input.GetButtonDown("Fire1"))
+
+        if (Input.GetButtonDown("Shoot") && !GameManager.Instance.paused)
+        {
             Shoot();
+            FeedbacksManager.Instance.shootGunFeedbacks.PlayFeedbacks();
+        }
     }
 
     private void FixedUpdate()
     {
-        if(Input.GetAxis("Vertical") > 0)
-            _rb.AddForce(transform.forward * thrustSpeed);
-        if(Input.GetAxis("Vertical") < 0)
-            _rb.AddForce(-transform.forward * thrustSpeed);
-        if(_turnDirection != 0f)
-            _rb.AddTorque(Vector3.up * _turnDirection * turnMultiplier, ForceMode.VelocityChange);
+        if (!GameManager.Instance.paused)
+        {
+            if(Input.GetAxis("Vertical") > 0)
+                _rb.AddForce(transform.forward * thrustSpeed);
+            if(Input.GetAxis("Vertical") < 0)
+                _rb.AddForce(-transform.forward * thrustSpeed);
+            if(_turnDirection != 0f)
+                _rb.AddTorque(Vector3.up * _turnDirection * turnMultiplier, ForceMode.VelocityChange);
+        }
     }
 
     private void OnCollisionEnter(Collision other)
@@ -61,7 +67,7 @@ public class Player : MonoBehaviour
     
     private void Shoot()
     {
-        var bullet = Instantiate(bulletPrefab, transform.position, transform.rotation);
+        var bullet = Instantiate(bulletPrefab, transform.position + transform.forward, transform.rotation);
         bullet.Project(transform.forward);
     }
 

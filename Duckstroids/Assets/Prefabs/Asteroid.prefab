@@ -426,12 +426,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abe1899146ef37a4da85de9f6960e3ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  splitSpeed: 3
+  splitSpeed: 5
   size: 1
   minSize: 0.5
   maxSize: 1.5
-  speed: 15
+  speed: 10
   maxLifetime: 30
+  rb: {fileID: 0}
 --- !u!135 &7829329444348224075
 SphereCollider:
   m_ObjectHideFlags: 0
