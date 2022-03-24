@@ -6,6 +6,8 @@ using Random = UnityEngine.Random;
 
 public class Asteroid : MonoBehaviour
 {
+    [SerializeField] private float splitSpeed = 3.0f;
+    
     public float size = 1.0f;
     public float minSize = 0.5f;
     public float maxSize = 1.5f;
@@ -33,5 +35,29 @@ public class Asteroid : MonoBehaviour
         _rb.AddForce(direction * speed);
         
         Destroy(gameObject, maxLifetime);
+    }
+
+    private void OnCollisionEnter(Collision other)
+    {
+        if (other.gameObject.TryGetComponent<Bullet>(out Bullet bullet))
+        {
+            if((size * 0.5f) >= minSize)
+            {
+                CreateSplit();
+                CreateSplit();
+            }
+            
+            Destroy(gameObject);
+        }
+    }
+
+    private void CreateSplit()
+    {
+        var pos = transform.position;
+        pos += (new Vector3(Random.insideUnitCircle.x, 0, Random.insideUnitCircle.y) * 0.5f);
+        
+        var half = Instantiate(this, pos, transform.rotation);
+        half.size = size * 0.5f;
+        half.SetTrajectory(new Vector3(Random.insideUnitCircle.normalized.x, 0, Random.insideUnitCircle.normalized.y) * splitSpeed);
     }
 }

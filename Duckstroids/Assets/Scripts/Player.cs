@@ -6,8 +6,9 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
     [SerializeField] private float thrustSpeed = 5.0f;
-    [SerializeField] private float turnMultiplier = 1f;
+    [SerializeField] private float turnMultiplier = 1.0f;
     [SerializeField] private Bullet bulletPrefab;
+    [SerializeField] private float respawnCooldown = 3.0f;
     
     private bool _thrusting;
     private bool _turning;
@@ -17,6 +18,12 @@ public class Player : MonoBehaviour
     private void Awake()
     {
         _rb = GetComponent<Rigidbody>();
+    }
+
+    private void OnEnable()
+    {
+        gameObject.layer = LayerMask.NameToLayer("Ignore Collisions");
+        Invoke(nameof(TurnOnCollision), respawnCooldown);
     }
 
     private void Update()
@@ -39,9 +46,27 @@ public class Player : MonoBehaviour
             _rb.AddTorque(Vector3.up * _turnDirection * turnMultiplier, ForceMode.VelocityChange);
     }
 
+    private void OnCollisionEnter(Collision other)
+    {
+        if (other.gameObject.TryGetComponent<Asteroid>(out Asteroid asteroid))
+        {
+            _rb.velocity = Vector3.zero;
+            _rb.angularVelocity = Vector3.zero;
+            
+            gameObject.SetActive(false);
+            
+            GameManager.Instance.PlayerDied();
+        }
+    }
+    
     private void Shoot()
     {
         var bullet = Instantiate(bulletPrefab, transform.position, transform.rotation);
         bullet.Project(transform.forward);
+    }
+
+    private void TurnOnCollision()
+    {
+        gameObject.layer = LayerMask.NameToLayer("Player");
     }
 }
