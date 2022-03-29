@@ -9,9 +9,8 @@ public class Player : MonoBehaviour
     [SerializeField] private float turnMultiplier = 1.0f;
     [SerializeField] private Bullet bulletPrefab;
     [SerializeField] private float respawnCooldown = 3.0f;
+    [SerializeField] private float rotSpeed = 1f;
     
-    private bool _thrusting;
-    private bool _turning;
     private float _turnDirection;
     private Rigidbody _rb;
 
@@ -28,27 +27,30 @@ public class Player : MonoBehaviour
 
     private void Update()
     {
-        _thrusting = Input.GetAxis("Vertical") != 0;
-        _turning = Input.GetAxis("Horizontal") != 0;
-        _turnDirection = Input.GetAxis("Horizontal");
-
-        if (Input.GetButtonDown("Shoot") && !GameManager.Instance.paused)
-        {
+        if(SimpleInput.GetAxisRaw("Horizontal") != 0 || SimpleInput.GetAxisRaw("Vertical") != 0)
+            Rotate();
+        
+        if (SimpleInput.GetButtonDown("Shoot"))
             Shoot();
-            FeedbacksManager.Instance.shootGunFeedbacks.PlayFeedbacks();
-        }
+        
     }
 
     private void FixedUpdate()
     {
         if (!GameManager.Instance.paused)
         {
-            if(Input.GetAxis("Vertical") > 0)
-                _rb.AddForce(transform.forward * thrustSpeed);
-            if(Input.GetAxis("Vertical") < 0)
-                _rb.AddForce(-transform.forward * thrustSpeed);
-            if(_turnDirection != 0f)
-                _rb.AddTorque(Vector3.up * _turnDirection * turnMultiplier, ForceMode.VelocityChange);
+            if(SimpleInput.GetAxis("Vertical") > 0)
+                _rb.AddForce(Vector3.forward * thrustSpeed);
+            if(SimpleInput.GetAxis("Vertical") < 0)
+                _rb.AddForce(-Vector3.forward * thrustSpeed);
+            if(SimpleInput.GetAxis("Horizontal") < 0)
+                _rb.AddForce(-Vector3.right * thrustSpeed);
+            if(SimpleInput.GetAxis("Horizontal") > 0)
+                _rb.AddForce(Vector3.right * thrustSpeed);
+            
+            
+            //if(_turnDirection != 0f)
+            //    _rb.AddTorque(Vector3.up * _turnDirection * turnMultiplier, ForceMode.VelocityChange);
         }
     }
 
@@ -65,14 +67,29 @@ public class Player : MonoBehaviour
         }
     }
     
-    private void Shoot()
+    public void Shoot()
     {
-        var bullet = Instantiate(bulletPrefab, transform.position + transform.forward, transform.rotation);
-        bullet.Project(transform.forward);
+        if (!GameManager.Instance.paused && GameManager.Instance.gameActive)
+        {
+            var bulletObject =
+                BulletPooler.Instance.SpawnObject(transform.position + transform.forward, transform.rotation);
+            var bullet = bulletObject.GetComponent<Bullet>();
+            bullet.Project(transform.forward);
+            FeedbacksManager.Instance.shootGunFeedbacks.PlayFeedbacks();
+        }
     }
 
     private void TurnOnCollision()
     {
         gameObject.layer = LayerMask.NameToLayer("Player");
+    }
+
+    private void Rotate()
+    {
+        var x = SimpleInput.GetAxisRaw("Horizontal");
+        var z = SimpleInput.GetAxisRaw("Vertical");
+        var move = new Vector3(x, 0, z);
+        var angle = Mathf.Atan2(move.z, move.x) * Mathf.Rad2Deg;
+        transform.forward = move;
     }
 }

@@ -58,6 +58,7 @@ public class GameManager : MonoBehaviour
 
     public void PlayerDied()
     {
+        gameActive = false;
         FeedbacksManager.Instance.playerDeathFeedbacks.PlayFeedbacks();
 
         vfxPlayerDeathExplosion.transform.position = player.transform.position;
@@ -85,7 +86,7 @@ public class GameManager : MonoBehaviour
         vfxAsteroidExplosion.transform.position = asteroid.transform.position;
         vfxAsteroidExplosion.Play();
         
-        Destroy(asteroid.gameObject);
+        AsteroidPooler.Instance.ReturnObject(asteroid.gameObject);
     }
 
     public void ResetScene()
@@ -97,6 +98,8 @@ public class GameManager : MonoBehaviour
         uiGameOverPanel.SetActive(false);
         uiHudPanel.SetActive(true);
         uiStartPanel.SetActive(false);
+        AsteroidPooler.Instance.ReturnAllAsteroids();
+        FindObjectOfType<AsteroidSpawner>().ResetSpawnRate();
         
         Respawn();
     }
@@ -118,6 +121,16 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 1;
     }
 
+    public void ContinueGame()
+    {
+        lives++;
+        uiGameOverPanel.SetActive(false);
+        gameActive = true;
+        Respawn();
+        AsteroidPooler.Instance.ReturnAllAsteroids();
+
+    }
+
     public void Restart()
     {
         ResetScene();
@@ -126,6 +139,7 @@ public class GameManager : MonoBehaviour
     
     private void Respawn()
     {
+        gameActive = true;
         player.transform.position = Vector3.zero;
         player.gameObject.SetActive(true);
     }
@@ -134,7 +148,7 @@ public class GameManager : MonoBehaviour
     {
         uiGameOverPanel.SetActive(true);
         gameActive = false;
-        
+
         FeedbacksManager.Instance.gameOverFeedbacks.PlayFeedbacks();
     }
 }

@@ -17,13 +17,14 @@ public class Bullet : MonoBehaviour
 
     private void OnCollisionEnter(Collision other)
     {
-        Destroy(gameObject);
+        BulletPooler.Instance.ReturnObject(gameObject);
     }
 
     public void Project(Vector3 direction)
     {
+        _rb.velocity = Vector3.zero;
+        _rb.angularVelocity = Vector3.zero;
         _rb.AddForce(direction * speed);
-        
-        Destroy(gameObject, maxLifetime);
     }
+    
 }

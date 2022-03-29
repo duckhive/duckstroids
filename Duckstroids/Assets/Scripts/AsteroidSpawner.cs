@@ -4,17 +4,20 @@ using Random = UnityEngine.Random;
 
 public class AsteroidSpawner : MonoBehaviour
 {
-    [SerializeField] private Asteroid asteroidPrefab;
+    //[SerializeField] private Asteroid asteroidPrefab;
     [SerializeField] private float spawnRate = 2.0f;
     [SerializeField] private float spawnAmount = 1.0f;
     [SerializeField] private float spawnDistance = 15.0f;
     [SerializeField] private float trajectoryVariance = 15.0f;
 
+    private float _spawnRateStart;
     private float _timer;
+    
 
     private void Start()
     {
         InvokeRepeating(nameof(Spawn), spawnRate, spawnRate);
+        _spawnRateStart = spawnRate;
     }
 
     private void Update()
@@ -23,7 +26,12 @@ public class AsteroidSpawner : MonoBehaviour
             SpawnAtDecreasingRate();
     }
 
-    public void SpawnAtDecreasingRate()
+    public void ResetSpawnRate()
+    {
+        spawnRate = _spawnRateStart;
+    }
+    
+    private void SpawnAtDecreasingRate()
     {
         _timer += Time.deltaTime;
 
@@ -35,7 +43,7 @@ public class AsteroidSpawner : MonoBehaviour
             InvokeRepeating(nameof(Spawn), spawnRate, spawnRate);
         }
     }
-    
+
     private void Spawn()
     {
         for (int i = 0; i < spawnAmount; i++)
@@ -45,10 +53,15 @@ public class AsteroidSpawner : MonoBehaviour
 
             var variance = Random.Range(-trajectoryVariance, trajectoryVariance);
             var rotation = Quaternion.AngleAxis(variance, Vector3.up);
-            
-            var asteroid = Instantiate(asteroidPrefab, spawnPoint, rotation);
+
+            var asteroidObject = AsteroidPooler.Instance.SpawnObject(spawnPoint, rotation);
+            var asteroid = asteroidObject.GetComponent<Asteroid>();
             asteroid.size = Random.Range(asteroid.minSize, asteroid.maxSize);
             asteroid.SetTrajectory(rotation * (new Vector3(-spawnDirection.x, 0, -spawnDirection.y)));
+            asteroid.rb.mass = asteroid.size;
+            asteroidObject.transform.eulerAngles = new Vector3(0, Random.value * 360, 0);
+            asteroidObject.transform.localScale = Vector3.one * asteroid.size;
+
 
             var randomForce = new Vector3(Random.value, Random.value, Random.value);
             asteroid.rb.AddTorque(randomForce * 10, ForceMode.Impulse);

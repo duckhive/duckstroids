@@ -22,7 +22,7 @@ public class Asteroid : MonoBehaviour
         rb = GetComponent<Rigidbody>();
     }
 
-    private void Start()
+    private void OnEnable()
     {
         transform.eulerAngles = new Vector3(0, Random.value * 360, 0);
         transform.localScale = Vector3.one * size;
@@ -33,8 +33,8 @@ public class Asteroid : MonoBehaviour
     public void SetTrajectory(Vector3 direction)
     {
         rb.AddForce(direction * speed);
-        
-        Destroy(gameObject, maxLifetime);
+
+        StartCoroutine(SendToPoolAfterDelay(30));
     }
 
     private void OnCollisionEnter(Collision other)
@@ -60,12 +60,22 @@ public class Asteroid : MonoBehaviour
     {
         var pos = transform.position;
         pos += (new Vector3(Random.insideUnitCircle.x, 0, Random.insideUnitCircle.y) * 0.5f);
-        
-        var half = Instantiate(this, pos, transform.rotation);
+
+        var asteroidObject = AsteroidPooler.Instance.SpawnObject(pos, transform.rotation);
+        var half = asteroidObject.GetComponent<Asteroid>();
+        //var half = Instantiate(this, pos, transform.rotation);
         half.size = size * 0.5f;
+        asteroidObject.transform.eulerAngles = new Vector3(0, Random.value * 360, 0);
+        asteroidObject.transform.localScale = Vector3.one * half.size;
         half.SetTrajectory(new Vector3(Random.insideUnitCircle.normalized.x, 0, Random.insideUnitCircle.normalized.y) * splitSpeed);
         
         var randomForce = new Vector3(Random.value, Random.value, Random.value);
         half.rb.AddTorque(randomForce * 10, ForceMode.Impulse);
+    }
+
+    private IEnumerator SendToPoolAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        AsteroidPooler.Instance.ReturnObject(gameObject);
     }
 }
